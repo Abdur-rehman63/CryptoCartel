@@ -1,0 +1,37 @@
+
+  // Session Persistence
+  useEffect(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      try {
+        const response = await api.auth.getCurrentUser();
+        // The API service returns { data: user } or { error: ... }
+        if (response.data) {
+          const userData = response.data as any;
+          const authenticatedUser: User = {
+            id: userData.id,
+            name: userData.name,
+            email: userData.email,
+            initialDeposit: userData.initial_deposit || 0,
+            role: userData.role as UserRole
+          };
+
+          setUser(authenticatedUser);
+          if (authenticatedUser.role === UserRole.ADMIN) {
+            setActiveTab('overview');
+          } else {
+            setActiveTab('dashboard');
+          }
+          setCurrentView(View.DASHBOARD);
+        } else {
+          localStorage.removeItem('auth_token');
+        }
+      } catch (err) {
+        console.error("Session restore failed:", err);
+        localStorage.removeItem('auth_token');
+      }
+    };
+    restoreSession();
+  }, []);
